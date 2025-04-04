@@ -1,88 +1,172 @@
 # AI Interview Assistant
 
-An intelligent system designed to automate and enhance the interview process using AI technology. This project aims to streamline hiring workflows, provide consistent candidate evaluation, and improve the overall interview experience.
+A modern AI-powered interview assistant designed to automate and enhance the hiring process. The system provides recruiters with structured interview workflows, AI-driven assessments, and seamless candidate interactions.
 
 ## Features
 
-- 🤖 AI-powered interview scheduling and coordination
-- 📝 Automated candidate screening and assessment
-- 🎯 Structured interview question generation
-- 📊 Real-time candidate evaluation and feedback
-- 🔄 Integration with popular HR and recruitment tools
-- 🔒 Secure handling of candidate data and privacy
+### For Recruiters
+- **Interview Template Builder:** Create custom interview templates with text inputs, multiple-choice questions, and video responses
+- **Automated Candidate Screening:** AI-powered scoring and evaluation of candidate responses
+- **Scheduling & Invitations:** Calendar integration and automated invitations
+- **Candidate Review Dashboard:** Review responses, watch videos, and compare candidates side-by-side
+- **Data Analytics:** Visualize hiring metrics and gain insights
+
+### For Candidates
+- **Automated Interview Interface:** Submit text, multiple-choice, and video responses
+- **Progress Tracking:** Monitor interview status and receive updates
+- **User-Friendly Experience:** Mobile-responsive UI with real-time validation
 
 ## Tech Stack
 
-- Backend: Node.js/Express.js
-- Frontend: React.js
-- Database: PostgreSQL
-- AI Integration: OpenAI API
-- Authentication: JWT/OAuth2
-- Deployment: Docker/Kubernetes
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v18 or higher)
-- npm or yarn
-- PostgreSQL
-- OpenAI API key
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ai-interview-assistant.git
-cd ai-interview-assistant
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env
-```
-Edit the `.env` file with your configuration details.
-
-4. Start the development server:
-```bash
-npm run dev
-```
+- **Frontend:** React.js with Tailwind CSS
+- **Backend:** Python FastAPI 
+- **Database:** PostgreSQL (SQLite for development)
+- **AI Integration:** OpenAI API
+- **Authentication:** JWT/OAuth2
 
 ## Project Structure
 
 ```
-ai-interview-assistant/
-├── src/
-│   ├── backend/         # Backend API and services
-│   ├── frontend/        # React frontend application
-│   ├── ai/             # AI integration and processing
-│   └── database/       # Database models and migrations
-├── tests/              # Test suites
-├── docs/              # Documentation
-└── scripts/           # Utility scripts
+project-x/
+├── frontend/              # React frontend app
+│   ├── public/            # Static files
+│   └── src/               # React source code
+│       ├── components/    # Reusable components
+│       ├── context/       # Global state management
+│       ├── hooks/         # Custom React hooks
+│       ├── layouts/       # Page layouts
+│       ├── pages/         # Page components
+│       ├── styles/        # CSS/Tailwind styles
+│       └── utils/         # Utility functions
+├── backend/               # Python FastAPI backend
+│   ├── app/               # Application code
+│   │   ├── routers/       # API endpoint routers
+│   │   ├── models.py      # Database models
+│   │   ├── schemas.py     # Pydantic schemas
+│   │   ├── crud.py        # Database operations
+│   │   ├── auth.py        # Authentication logic
+│   │   ├── ai_engine.py   # AI analysis logic
+│   │   ├── database.py    # Database connection
+│   │   ├── utils.py       # Utility functions
+│   │   └── main.py        # FastAPI application
+│   └── requirements.txt   # Python dependencies
+├── docker-compose.yml     # Docker Compose configuration
+├── README.md              # Project documentation
+└── .env.example           # Example environment variables
 ```
 
-## Contributing
+## Getting Started
 
-We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+### Prerequisites
+- Node.js 16+ and npm
+- Python 3.10+
+- PostgreSQL (optional for local development)
+- Docker and Docker Compose (for containerized setup)
+
+## Running Locally
+
+### Frontend Setup
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+### Backend Setup
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy .env.example to .env and configure as needed
+cp .env.example .env
+
+# Start the backend server
+uvicorn app.main:app --reload
+```
+
+### Running with Docker Compose
+
+The easiest way to run the entire application stack is using Docker Compose:
+
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+
+### Configuration
+
+To configure the application, you can modify these files:
+- Backend: `.env` file in the backend directory (copy from `.env.example`)
+- Frontend: No configuration needed for development
+
+### Demo Credentials
+
+For demo purposes, you can use:
+- Recruiter: recruiter@example.com (any password)
+- Candidate: candidate@example.com (any password)
+
+## Development Workflow
+
+### Backend Development
+
+The backend is built with FastAPI and follows this structure:
+- `app/main.py`: Main application entry point
+- `app/routers/`: API endpoint definitions 
+- `app/models.py`: SQLAlchemy ORM models
+- `app/schemas.py`: Pydantic validation schemas
+- `app/crud.py`: Database operations
+- `app/ai_engine.py`: AI integration for response analysis
+
+To add a new API endpoint, create or modify files in the `app/routers/` directory.
+
+### Frontend Development
+
+The frontend is built with React.js and uses:
+- React Router for navigation
+- Tailwind CSS for styling
+- Zustand for state management
+- Formik for form handling
+
+## Key Components
+
+### Recruiter Features
+- **Template Builder:** Create, edit, and manage interview templates with different question types
+- **Scheduler:** Set up interviews, send invitations, and track candidate progress
+- **Review Dashboard:** Evaluate candidate responses with AI-assisted scoring and analysis
+- **Analytics:** Track hiring metrics, conversion rates, and performance indicators
+
+### Candidate Features
+- **Interview Portal:** Take interviews, submit responses, and track progress
+- **Dashboard:** View pending and completed interviews
+- **Feedback:** Review performance feedback and AI-generated suggestions
 
 ## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-For any queries or support, please reach out to:
-- Project Lead: [Your Name]
-- Email: [your.email@example.com]
-- GitHub: [@yourusername]
-
-## Acknowledgments
-
-- OpenAI for providing the AI capabilities
-- All contributors who have helped shape this project
+MIT 
