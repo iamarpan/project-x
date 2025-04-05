@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { 
   SignedIn, 
   SignedOut, 
@@ -60,6 +60,7 @@ const App = () => {
   const { signOut } = useClerk();
   const { user, isSignedIn } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Add a body class for auth pages to help with centering
   React.useEffect(() => {
@@ -76,6 +77,16 @@ const App = () => {
     };
   }, [location.pathname]);
   
+  const handleSignOut = async () => {
+    try {
+      // Use redirectUrl option to specify where to go after sign-out
+      await signOut({ redirectUrl: '/sign-in' });
+      // No need to manually navigate - the redirectUrl will handle it
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
   return (
     <>
       {isSignedIn && location.pathname !== '/select-role' && (
@@ -86,7 +97,7 @@ const App = () => {
             </span>
             <UserButton />
             <button 
-              onClick={() => signOut()} 
+              onClick={handleSignOut} 
               className="bg-primary-500 hover:bg-primary-600 px-2 py-1 rounded text-xs"
             >
               Sign out

@@ -34,6 +34,17 @@ const UserTypeSelector = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      // Sign out the user using Clerk
+      // Use redirectUrl option to specify where to go after sign-out
+      await signOut({ redirectUrl: '/sign-in' });
+      // No need to manually navigate - the redirectUrl will handle it
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header with sign-out button */}
@@ -45,7 +56,7 @@ const UserTypeSelector = () => {
               {user?.firstName} {user?.lastName}
             </span>
             <button 
-              onClick={() => signOut()} 
+              onClick={handleSignOut} 
               className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150"
             >
               Sign out
