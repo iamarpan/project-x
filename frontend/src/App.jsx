@@ -78,7 +78,7 @@ const App = () => {
   
   return (
     <>
-      {isSignedIn && (
+      {isSignedIn && location.pathname !== '/select-role' && (
         <div className="fixed top-0 right-0 z-50 bg-gray-800 text-white px-4 py-2 text-sm">
           <div className="flex items-center space-x-4">
             <span>
