@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Database URL from environment variable or default to SQLite for development
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./interview_assistant.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ai_interview_assistant.db")
 
 # For SQLite
 if DATABASE_URL.startswith("sqlite"):
