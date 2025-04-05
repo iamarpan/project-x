@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useClerk, useUser } from '@clerk/clerk-react';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -15,6 +16,8 @@ import {
 const RecruiterLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { signOut } = useClerk();
+  const { user } = useUser();
 
   const navigation = [
     { name: 'Dashboard', href: '/recruiter/dashboard', icon: HomeIcon },
@@ -26,13 +29,33 @@ const RecruiterLayout = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   
-  const handleLogout = () => {
-    // In a real app, would handle proper logout
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirectUrl: '/sign-in' });
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      navigate('/sign-in');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Top header with sign-out button */}
+      <div className="fixed top-0 right-0 z-50 bg-white shadow-sm px-4 py-2 text-sm border-l border-gray-200">
+        <div className="flex items-center space-x-4">
+          <span className="text-gray-700">
+            {user?.firstName} {user?.lastName || ''}
+          </span>
+          <button 
+            onClick={handleLogout} 
+            className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 flex items-center"
+          >
+            <ArrowRightOnRectangleIcon className="h-4 w-4 mr-1.5" />
+            <span>Sign out</span>
+          </button>
+        </div>
+      </div>
+    
       {/* Mobile sidebar */}
       <div
         className={`fixed inset-0 z-40 flex md:hidden ${
@@ -99,11 +122,21 @@ const RecruiterLayout = () => {
           <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <UserCircleIcon className="h-10 w-10 text-gray-400" />
+                {user?.imageUrl ? (
+                  <img 
+                    src={user.imageUrl} 
+                    alt="Profile" 
+                    className="h-10 w-10 rounded-full"
+                  />
+                ) : (
+                  <UserCircleIcon className="h-10 w-10 text-gray-400" />
+                )}
               </div>
               <div className="ml-3">
-                <p className="text-base font-medium text-gray-700">Sarah Williams</p>
-                <p className="text-sm font-medium text-gray-500">HR Manager</p>
+                <p className="text-base font-medium text-gray-700">
+                  {user?.firstName} {user?.lastName || ''}
+                </p>
+                <p className="text-sm font-medium text-gray-500">Recruiter</p>
               </div>
             </div>
           </div>
@@ -144,11 +177,21 @@ const RecruiterLayout = () => {
           <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <UserCircleIcon className="h-10 w-10 text-gray-400" />
+                {user?.imageUrl ? (
+                  <img 
+                    src={user.imageUrl} 
+                    alt="Profile" 
+                    className="h-10 w-10 rounded-full"
+                  />
+                ) : (
+                  <UserCircleIcon className="h-10 w-10 text-gray-400" />
+                )}
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">Sarah Williams</p>
-                <p className="text-xs font-medium text-gray-500">HR Manager</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {user?.firstName} {user?.lastName || ''}
+                </p>
+                <p className="text-xs font-medium text-gray-500">Recruiter</p>
               </div>
             </div>
           </div>
@@ -167,25 +210,15 @@ const RecruiterLayout = () => {
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
-          <div className="flex-1 px-4 md:px-8 flex justify-between">
+          <div className="flex-1 px-4 md:px-8 flex">
             <div className="flex-1 flex items-center md:hidden">
               <h1 className="text-lg font-semibold text-gray-800">AI Interview Assistant</h1>
-            </div>
-            <div className="ml-4 flex items-center md:ml-6">
-              <button
-                type="button"
-                className="flex items-center text-sm text-gray-500 hover:text-gray-800 focus:outline-none"
-                onClick={handleLogout}
-              >
-                <ArrowRightOnRectangleIcon className="h-5 w-5 mr-1" />
-                <span className="hidden md:inline-block">Logout</span>
-              </button>
             </div>
           </div>
         </div>
 
         {/* Content area */}
-        <main className="flex-1 pb-8">
+        <main className="flex-1 pb-8 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
             <Outlet />
           </div>

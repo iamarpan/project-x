@@ -46,9 +46,15 @@ const ProtectedRoute = ({ children, userType }) => {
 
   // If userType is specified, check if user has the correct type
   if (userType) {
-    const currentUserType = getUserType(user);
-    
-    if (currentUserType !== userType) {
+    try {
+      const currentUserType = getUserType(user);
+      
+      if (currentUserType !== userType) {
+        console.log(`User type mismatch: expected ${userType}, got ${currentUserType}`);
+        return <Navigate to="/select-role" replace />;
+      }
+    } catch (error) {
+      console.error('Error checking user type:', error);
       return <Navigate to="/select-role" replace />;
     }
   }
@@ -87,18 +93,24 @@ const App = () => {
     }
   };
   
+  // Check if current path is a dashboard path that already has its own header
+  const isDashboardPath = 
+    location.pathname.startsWith('/recruiter') || 
+    location.pathname.startsWith('/candidate') ||
+    location.pathname.startsWith('/interview');
+  
   return (
     <>
-      {isSignedIn && location.pathname !== '/select-role' && (
-        <div className="fixed top-0 right-0 z-50 bg-gray-800 text-white px-4 py-2 text-sm">
+      {isSignedIn && location.pathname !== '/select-role' && !isDashboardPath && (
+        <div className="fixed top-0 right-0 z-50 bg-white shadow-sm px-4 py-2 text-sm border-l border-gray-200">
           <div className="flex items-center space-x-4">
-            <span>
+            <span className="text-gray-700">
               {user.firstName} {user.lastName}
             </span>
             <UserButton />
             <button 
               onClick={handleSignOut} 
-              className="bg-primary-500 hover:bg-primary-600 px-2 py-1 rounded text-xs"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md text-xs font-medium"
             >
               Sign out
             </button>

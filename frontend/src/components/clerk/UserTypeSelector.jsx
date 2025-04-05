@@ -11,14 +11,27 @@ const UserTypeSelector = () => {
   const navigate = useNavigate();
 
   const handleSelectUserType = async (selectedType) => {
-    if (!user) return;
+    if (!user) {
+      setError('User not found. Please sign out and sign in again.');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log(`Setting user type to: ${selectedType}`);
+      
       // Update the user's metadata with their selected type using the utility function
-      await setUserType(user, selectedType);
+      try {
+        await setUserType(user, selectedType);
+        console.log('Successfully updated user metadata');
+      } catch (metadataError) {
+        console.error('Failed to update Clerk metadata, using localStorage fallback', metadataError);
+        // Fallback: Store user type in localStorage
+        localStorage.setItem('userType', selectedType);
+        localStorage.setItem('userEmail', user.primaryEmailAddress?.emailAddress);
+      }
       
       // Navigate to the appropriate dashboard
       if (selectedType === 'recruiter') {
@@ -28,7 +41,19 @@ const UserTypeSelector = () => {
       }
     } catch (err) {
       console.error('Error setting user type:', err);
-      setError('Failed to set user type. Please try again.');
+      
+      // Provide a more detailed error message to the user
+      let errorMessage = 'Failed to set user type. Please try again.';
+      
+      if (err.message && err.message.includes('permissions')) {
+        errorMessage = 'Permission error: You may not have the necessary permissions to set your role.';
+      } else if (err.message && err.message.includes('network')) {
+        errorMessage = 'Network error: Please check your connection and try again.';
+      } else if (err.message) {
+        errorMessage = `Error: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
