@@ -1,0 +1,29 @@
+/* Auth pages styling */
+.auth-page {
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Clerk specific styles - target the Clerk container */
+.auth-page div[data-clerk-component="SignIn"],
+.auth-page div[data-clerk-component="SignUp"] {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  padding: 1rem !important;
+}
+
+/* Make sure the card is properly sized and centered */
+.auth-page div[data-clerk-component="Card"] {
+  width: 100% !important;
+  max-width: 28rem !important;
+  margin: 0 auto !important;
+} 

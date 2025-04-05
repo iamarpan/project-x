@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { 
   SignedIn, 
   SignedOut, 
@@ -30,6 +30,9 @@ import Reviews from './pages/recruiter/Reviews';
 import CandidateDashboard from './pages/candidate/Dashboard';
 import InterviewSession from './pages/candidate/InterviewSession';
 import InterviewComplete from './pages/candidate/InterviewComplete';
+import CandidateInterviews from './pages/candidate/Interviews';
+import CandidateSchedule from './pages/candidate/Schedule';
+import CandidateHelp from './pages/candidate/Help';
 
 // Additional import for UserTypeSelector
 import UserTypeSelector from './components/clerk/UserTypeSelector';
@@ -46,9 +49,15 @@ const ProtectedRoute = ({ children, userType }) => {
 
   // If userType is specified, check if user has the correct type
   if (userType) {
-    const currentUserType = getUserType(user);
-    
-    if (currentUserType !== userType) {
+    try {
+      const currentUserType = getUserType(user);
+      
+      if (currentUserType !== userType) {
+        console.log(`User type mismatch: expected ${userType}, got ${currentUserType}`);
+        return <Navigate to="/select-role" replace />;
+      }
+    } catch (error) {
+      console.error('Error checking user type:', error);
       return <Navigate to="/select-role" replace />;
     }
   }
@@ -59,19 +68,52 @@ const ProtectedRoute = ({ children, userType }) => {
 const App = () => {
   const { signOut } = useClerk();
   const { user, isSignedIn } = useUser();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Add a body class for auth pages to help with centering
+  React.useEffect(() => {
+    const isAuthPage = location.pathname.includes('/sign-in') || location.pathname.includes('/sign-up');
+    
+    if (isAuthPage) {
+      document.body.classList.add('auth-page');
+    } else {
+      document.body.classList.remove('auth-page');
+    }
+    
+    return () => {
+      document.body.classList.remove('auth-page');
+    };
+  }, [location.pathname]);
+  
+  const handleSignOut = async () => {
+    try {
+      // Use redirectUrl option to specify where to go after sign-out
+      await signOut({ redirectUrl: '/sign-in' });
+      // No need to manually navigate - the redirectUrl will handle it
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
+  // Check if current path is a dashboard path that already has its own header
+  const isDashboardPath = 
+    location.pathname.startsWith('/recruiter') || 
+    location.pathname.startsWith('/candidate') ||
+    location.pathname.startsWith('/interview');
   
   return (
     <>
-      {isSignedIn && (
-        <div className="fixed top-0 right-0 z-50 bg-gray-800 text-white px-4 py-2 text-sm">
+      {isSignedIn && location.pathname !== '/select-role' && !isDashboardPath && (
+        <div className="fixed top-0 right-0 z-50 bg-white shadow-sm px-4 py-2 text-sm border-l border-gray-200">
           <div className="flex items-center space-x-4">
-            <span>
+            <span className="text-gray-700">
               {user.firstName} {user.lastName}
             </span>
             <UserButton />
             <button 
-              onClick={() => signOut()} 
-              className="bg-primary-500 hover:bg-primary-600 px-2 py-1 rounded text-xs"
+              onClick={handleSignOut} 
+              className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md text-xs font-medium"
             >
               Sign out
             </button>
@@ -149,6 +191,9 @@ const App = () => {
         >
           <Route index element={<Navigate to="/candidate/dashboard" replace />} />
           <Route path="dashboard" element={<CandidateDashboard />} />
+          <Route path="interviews" element={<CandidateInterviews />} />
+          <Route path="schedule" element={<CandidateSchedule />} />
+          <Route path="help" element={<CandidateHelp />} />
         </Route>
         
         {/* Interview session standalone page */}
