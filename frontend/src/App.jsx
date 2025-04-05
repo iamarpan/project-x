@@ -59,6 +59,22 @@ const ProtectedRoute = ({ children, userType }) => {
 const App = () => {
   const { signOut } = useClerk();
   const { user, isSignedIn } = useUser();
+  const location = useLocation();
+  
+  // Add a body class for auth pages to help with centering
+  React.useEffect(() => {
+    const isAuthPage = location.pathname.includes('/sign-in') || location.pathname.includes('/sign-up');
+    
+    if (isAuthPage) {
+      document.body.classList.add('auth-page');
+    } else {
+      document.body.classList.remove('auth-page');
+    }
+    
+    return () => {
+      document.body.classList.remove('auth-page');
+    };
+  }, [location.pathname]);
   
   return (
     <>
