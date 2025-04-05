@@ -1,10 +1,12 @@
 from datetime import timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from starlette.responses import RedirectResponse
+import os
 
-from .. import crud, models, schemas, auth, database, utils
+from .. import crud, models, schemas, auth, database, utils, oauth
 
 router = APIRouter(
     prefix="/auth",
@@ -87,4 +89,63 @@ async def read_users_me(
     """
     Get current user information.
     """
-    return current_user 
+    return current_user
+
+# OAuth routes
+@router.get("/login/{provider}")
+async def oauth_login(
+    provider: str, 
+    request: Request,
+    user_type: str = "candidate"
+):
+    """Initiate OAuth login flow with specified provider"""
+    # Validate the provider
+    if provider not in ["google", "twitter", "linkedin"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported provider: {provider}"
+        )
+    
+    # Store user_type in session
+    request.session["user_type"] = user_type
+    
+    # Redirect to provider's authorization page
+    redirect_uri = f"{os.getenv('OAUTH_REDIRECT_URL', request.url_for('oauth_callback', provider=provider))}"
+    return await oauth.oauth.get(provider).authorize_redirect(request, redirect_uri)
+
+@router.get("/callback/{provider}")
+async def oauth_callback(
+    provider: str, 
+    request: Request,
+    db: Session = Depends(database.get_db)
+):
+    """Handle OAuth callback from provider"""
+    try:
+        # Get user type from session
+        user_type = request.session.get("user_type", "candidate")
+        
+        # Get user info from the provider
+        user_info = await oauth.get_oauth_user_info(provider, request)
+        
+        # Get or create user
+        db_user = await oauth.get_or_create_oauth_user(user_info, db, user_type)
+        
+        # Create access token
+        access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = auth.create_access_token(
+            data={"sub": db_user.email, "user_type": db_user.user_type}, 
+            expires_delta=access_token_expires
+        )
+        
+        # Build the frontend URL with token
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        redirect_url = f"{frontend_url}/auth/callback?token={access_token}&user_id={db_user.id}&user_type={db_user.user_type}&name={db_user.first_name}%20{db_user.last_name}"
+        
+        # Redirect to frontend with token
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        # Redirect to frontend with error
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        error_redirect = f"{frontend_url}/login?error=oauth_failed&message={str(e)}"
+        return RedirectResponse(url=error_redirect) 

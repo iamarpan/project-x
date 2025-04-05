@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { create } from 'zustand';
+import { 
+  SignedIn, 
+  SignedOut, 
+  RedirectToSignIn, 
+  SignIn, 
+  SignUp, 
+  UserButton, 
+  useUser, 
+  useClerk 
+} from '@clerk/clerk-react';
+import { getUserType } from './utils/userMetadata';
 
 // Layout components
 import RecruiterLayout from './layouts/RecruiterLayout';
@@ -21,104 +31,100 @@ import CandidateDashboard from './pages/candidate/Dashboard';
 import InterviewSession from './pages/candidate/InterviewSession';
 import InterviewComplete from './pages/candidate/InterviewComplete';
 
-// Auth pages
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
+// Additional import for UserTypeSelector
+import UserTypeSelector from './components/clerk/UserTypeSelector';
 
-// Create a store for authentication
-const useAuthStore = create((set) => ({
-  isAuthenticated: false, // In a real app, would check localStorage/cookie
-  userType: null, // 'recruiter' or 'candidate'
-  login: (userType) => set({ isAuthenticated: true, userType }),
-  logout: () => set({ isAuthenticated: false, userType: null }),
-}));
+// Protected route component
+const ProtectedRoute = ({ children, userType }) => {
+  const { isSignedIn, user } = useUser();
+  const location = useLocation();
 
-// Demo user types for easy switching
-const DEMO_TYPES = {
-  RECRUITER: 'recruiter',
-  CANDIDATE: 'candidate',
+  // User isn't signed in, redirect to sign-in page
+  if (!isSignedIn) {
+    return <RedirectToSignIn />;
+  }
+
+  // If userType is specified, check if user has the correct type
+  if (userType) {
+    const currentUserType = getUserType(user);
+    
+    if (currentUserType !== userType) {
+      return <Navigate to="/select-role" replace />;
+    }
+  }
+  
+  return children;
 };
 
 const App = () => {
-  const { isAuthenticated, userType, login, logout } = useAuthStore();
-  const location = useLocation();
+  const { signOut } = useClerk();
+  const { user, isSignedIn } = useUser();
   
-  // Demo mode for showcasing both interfaces
-  const [demoUserType, setDemoUserType] = useState(userType || DEMO_TYPES.RECRUITER);
-  
-  // For demo purposes, set based on URL
-  useEffect(() => {
-    if (location.pathname.includes('/recruiter')) {
-      setDemoUserType(DEMO_TYPES.RECRUITER);
-    } else if (location.pathname.includes('/candidate')) {
-      setDemoUserType(DEMO_TYPES.CANDIDATE);
-    }
-  }, [location.pathname]);
-  
-  // For demo, auto login
-  useEffect(() => {
-    if (!isAuthenticated) {
-      login(demoUserType);
-    }
-  }, [isAuthenticated, demoUserType, login]);
-  
-  // Auth check for routes
-  const RequireAuth = ({ children, userType: requiredUserType }) => {
-    if (!isAuthenticated) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
-    
-    // In a real app, check for proper authorization
-    if (requiredUserType && userType !== requiredUserType) {
-      // For demo, pretend to be the correct user type
-      return children;
-      
-      // In a real app, do this instead:
-      // return <Navigate to="/" replace />;
-    }
-    
-    return children;
-  };
-  
-  // User switching for demo purposes only
-  const switchUserType = () => {
-    const newUserType = demoUserType === DEMO_TYPES.RECRUITER 
-      ? DEMO_TYPES.CANDIDATE 
-      : DEMO_TYPES.RECRUITER;
-    
-    setDemoUserType(newUserType);
-    logout();
-    login(newUserType);
-    
-    return newUserType === DEMO_TYPES.RECRUITER 
-      ? <Navigate to="/recruiter/dashboard" replace />
-      : <Navigate to="/candidate/dashboard" replace />;
-  };
-
   return (
     <>
-      {/* Demo Mode Panel (would be removed in real app) */}
-      <div className="fixed top-0 right-0 z-50 bg-gray-800 text-white px-4 py-2 text-sm">
-        <div className="flex items-center space-x-2">
-          <span>Demo Mode: {demoUserType.toUpperCase()}</span>
-          <button onClick={switchUserType} className="bg-primary-500 hover:bg-primary-600 px-2 py-1 rounded text-xs">
-            Switch to {demoUserType === DEMO_TYPES.RECRUITER ? 'CANDIDATE' : 'RECRUITER'}
-          </button>
+      {isSignedIn && (
+        <div className="fixed top-0 right-0 z-50 bg-gray-800 text-white px-4 py-2 text-sm">
+          <div className="flex items-center space-x-4">
+            <span>
+              {user.firstName} {user.lastName}
+            </span>
+            <UserButton />
+            <button 
+              onClick={() => signOut()} 
+              className="bg-primary-500 hover:bg-primary-600 px-2 py-1 rounded text-xs"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       
       <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public auth routes */}
+        <Route
+          path="/sign-in/*"
+          element={
+            <SignedOut>
+              <SignIn routing="path" path="/sign-in" redirectUrl="/dashboard" />
+            </SignedOut>
+          }
+        />
+        <Route
+          path="/sign-up/*"
+          element={
+            <SignedOut>
+              <SignUp routing="path" path="/sign-up" redirectUrl="/dashboard" />
+            </SignedOut>
+          }
+        />
+        
+        {/* Dashboard route - redirects to appropriate dashboard based on user type */}
+        <Route
+          path="/dashboard"
+          element={
+            <SignedIn>
+              <Navigate to="/select-role" replace />
+            </SignedIn>
+          }
+        />
+        
+        {/* User type selector - only accessible when signed in */}
+        <Route
+          path="/select-role"
+          element={
+            <SignedIn>
+              <UserTypeSelector />
+            </SignedIn>
+          }
+        />
         
         {/* Recruiter routes */}
         <Route 
           path="/recruiter" 
           element={
-            <RequireAuth userType={DEMO_TYPES.RECRUITER}>
+            <ProtectedRoute userType="recruiter">
               <RecruiterLayout />
-            </RequireAuth>
+            </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="/recruiter/dashboard" replace />} />
@@ -136,9 +142,9 @@ const App = () => {
         <Route 
           path="/candidate" 
           element={
-            <RequireAuth userType={DEMO_TYPES.CANDIDATE}>
+            <ProtectedRoute userType="candidate">
               <CandidateLayout />
-            </RequireAuth>
+            </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="/candidate/dashboard" replace />} />
@@ -149,36 +155,30 @@ const App = () => {
         <Route 
           path="/interview/:interviewId" 
           element={
-            <RequireAuth userType={DEMO_TYPES.CANDIDATE}>
+            <ProtectedRoute userType="candidate">
               <InterviewSession />
-            </RequireAuth>
+            </ProtectedRoute>
           } 
         />
         
         <Route 
           path="/interview-complete" 
           element={
-            <RequireAuth userType={DEMO_TYPES.CANDIDATE}>
+            <ProtectedRoute userType="candidate">
               <InterviewComplete />
-            </RequireAuth>
+            </ProtectedRoute>
           } 
         />
         
-        {/* Redirect to appropriate dashboard based on user type */}
+        {/* Root redirect */}
         <Route 
           path="/" 
-          element={
-            isAuthenticated ? (
-              userType === DEMO_TYPES.RECRUITER ? (
-                <Navigate to="/recruiter/dashboard" replace />
-              ) : (
-                <Navigate to="/candidate/dashboard" replace />
-              )
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
+          element={<Navigate to="/dashboard" replace />} 
         />
+        
+        {/* Legacy redirects */}
+        <Route path="/login" element={<Navigate to="/sign-in" replace />} />
+        <Route path="/register" element={<Navigate to="/sign-up" replace />} />
         
         {/* 404 route */}
         <Route path="*" element={<div>Page Not Found</div>} />

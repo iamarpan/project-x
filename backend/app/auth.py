@@ -69,6 +69,24 @@ def authenticate_user(email: str, password: str, db: Session = None):
     
     return None
 
+def authenticate_oauth_user(email: str, oauth_provider: str, oauth_provider_id: str, db: Session):
+    """Authenticate a user based on OAuth provider information"""
+    # Check if user exists with this OAuth provider ID
+    user = db.query(models.User).filter(
+        models.User.oauth_provider == oauth_provider,
+        models.User.oauth_provider_id == oauth_provider_id
+    ).first()
+    
+    # If not found, try by email as fallback
+    if not user:
+        user = db.query(models.User).filter(models.User.email == email).first()
+    
+    # Ensure the user is active
+    if user and not user.is_active:
+        return None
+        
+    return user
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:

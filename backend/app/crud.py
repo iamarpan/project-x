@@ -29,6 +29,26 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
+def create_oauth_user(db: Session, user: schemas.UserCreate, oauth_provider: str, oauth_provider_id: str):
+    """Create a new user from OAuth authentication"""
+    # For OAuth users, we don't store a password
+    db_user = models.User(
+        email=user.email,
+        hashed_password="", # No password for OAuth users
+        first_name=user.first_name,
+        last_name=user.last_name,
+        company=user.company,
+        position=user.position,
+        user_type=user.user_type,
+        profile_image=user.profile_image,
+        oauth_provider=oauth_provider,
+        oauth_provider_id=oauth_provider_id
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 # Interview Template operations
 def get_interview_template(db: Session, template_id: int):
     return db.query(models.InterviewTemplate).filter(models.InterviewTemplate.id == template_id).first()

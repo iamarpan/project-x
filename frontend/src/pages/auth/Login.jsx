@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { create } from 'zustand';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
-// Assume this is imported from a common auth store
-const useAuthStore = create((set) => ({
-  isAuthenticated: false,
-  userType: null, // 'recruiter' or 'candidate'
-  login: (userType) => set({ isAuthenticated: true, userType }),
-  logout: () => set({ isAuthenticated: false, userType: null }),
-}));
+// Import auth context
+import { useAuth } from '../../context/AuthContext';
+import SocialLogin from '../../components/common/SocialLogin';
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
@@ -24,24 +19,34 @@ const LoginSchema = Yup.object().shape({
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuthStore();
-  const [authError, setAuthError] = useState('');
+  const { login, error: authError, isAuthenticated, currentUser } = useAuth();
+  const [loginError, setLoginError] = useState('');
   
   const from = location.state?.from?.pathname || '/';
   
-  const handleSubmit = (values, { setSubmitting }) => {
-    // In a real app, this would call an API endpoint
+  // If already authenticated, redirect to the appropriate dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      const path = currentUser?.type === 'recruiter' 
+        ? '/recruiter/dashboard' 
+        : '/candidate/dashboard';
+      navigate(path, { replace: true });
+    }
+  }, [isAuthenticated, currentUser, navigate]);
+  
+  const handleSubmit = async (values, { setSubmitting }) => {
+    setLoginError('');
     
-    // Demo login logic - for demo purposes only
-    if (values.email.includes('recruiter')) {
-      login('recruiter');
-      navigate('/recruiter/dashboard', { replace: true });
-    } else if (values.email.includes('candidate')) {
-      login('candidate');
-      navigate('/candidate/dashboard', { replace: true });
-    } else {
-      // Simulate login failure for demo
-      setAuthError('Invalid email or password. Try using "recruiter@example.com" or "candidate@example.com" with any password.');
+    try {
+      const success = await login(values);
+      
+      if (success) {
+        // Let the useEffect handle the redirect
+      } else {
+        setLoginError('Invalid credentials. Please try again.');
+      }
+    } catch (err) {
+      setLoginError(err.message || 'Login failed. Please try again.');
     }
     
     setSubmitting(false);
@@ -68,13 +73,13 @@ const Login = () => {
             validationSchema={LoginSchema}
             onSubmit={handleSubmit}
           >
-            {({ isSubmitting, errors, touched }) => (
+            {({ isSubmitting, errors, touched, values }) => (
               <Form className="space-y-6">
-                {authError && (
+                {(loginError || authError) && (
                   <div className="bg-red-50 border-l-4 border-red-400 p-4">
                     <div className="flex">
                       <div className="ml-3">
-                        <p className="text-sm text-red-700">{authError}</p>
+                        <p className="text-sm text-red-700">{loginError || authError}</p>
                       </div>
                     </div>
                   </div>
@@ -152,42 +157,24 @@ const Login = () => {
                   </button>
                 </div>
                 
-                {/* Demo Quick Login Section */}
+                <SocialLogin userType={values.email.includes('recruiter') ? 'recruiter' : 'candidate'} />
+                
                 <div className="mt-6">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-gray-500">Demo Quick Login</span>
+                      <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
                     </div>
                   </div>
                   
-                  <div className="mt-6 grid grid-cols-2 gap-3">
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          login('recruiter');
-                          navigate('/recruiter/dashboard', { replace: true });
-                        }}
-                        className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                      >
-                        Recruiter Demo
-                      </button>
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          login('candidate');
-                          navigate('/candidate/dashboard', { replace: true });
-                        }}
-                        className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                      >
-                        Candidate Demo
-                      </button>
-                    </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p className="mb-1">For demo purposes, you can use any of the following:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li><strong>Recruiter:</strong> recruiter@example.com / any password</li>
+                      <li><strong>Candidate:</strong> candidate@example.com / any password</li>
+                    </ul>
                   </div>
                 </div>
               </Form>

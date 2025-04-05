@@ -36,6 +36,10 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # OAuth fields
+    oauth_provider = Column(String, nullable=True)  # 'google', 'twitter', 'linkedin'
+    oauth_provider_id = Column(String, nullable=True)  # Provider's user ID
 
     # Relationships
     created_templates = relationship("InterviewTemplate", back_populates="creator")

@@ -4,10 +4,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 from datetime import datetime, timedelta
+from starlette.middleware.sessions import SessionMiddleware
 
 from .database import engine, get_db
 from . import models, schemas, crud, auth
 from .routers import auth as auth_router, templates, interviews, analytics
+from . import clerk_webhook
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -35,11 +37,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add session middleware for OAuth
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=os.getenv("SECRET_KEY", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7")
+)
+
 # Include routers
 app.include_router(auth_router.router)
 app.include_router(templates.router)
 app.include_router(interviews.router)
 app.include_router(analytics.router)
+app.include_router(clerk_webhook.router)
 
 @app.get("/")
 async def root():

@@ -24,6 +24,9 @@ class QuestionType(str, enum.Enum):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_id: Optional[int] = None
+    user_type: Optional[str] = None
+    user_name: Optional[str] = None
 
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -32,6 +35,10 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class OAuthLogin(BaseModel):
+    provider: str
+    user_type: Optional[UserType] = UserType.candidate
 
 # Base schemas
 class UserBase(BaseModel):
@@ -44,12 +51,14 @@ class UserBase(BaseModel):
     profile_image: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str
+    password: str = ""  # Password can be empty for OAuth users
 
 class User(UserBase):
     id: int
     is_active: bool = True
     created_at: Optional[datetime] = None
+    oauth_provider: Optional[str] = None
+    oauth_provider_id: Optional[str] = None
 
     class Config:
         orm_mode = True
