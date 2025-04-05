@@ -30,6 +30,9 @@ import Reviews from './pages/recruiter/Reviews';
 import CandidateDashboard from './pages/candidate/Dashboard';
 import InterviewSession from './pages/candidate/InterviewSession';
 import InterviewComplete from './pages/candidate/InterviewComplete';
+import CandidateInterviews from './pages/candidate/Interviews';
+import CandidateSchedule from './pages/candidate/Schedule';
+import CandidateHelp from './pages/candidate/Help';
 
 // Additional import for UserTypeSelector
 import UserTypeSelector from './components/clerk/UserTypeSelector';
@@ -188,6 +191,9 @@ const App = () => {
         >
           <Route index element={<Navigate to="/candidate/dashboard" replace />} />
           <Route path="dashboard" element={<CandidateDashboard />} />
+          <Route path="interviews" element={<CandidateInterviews />} />
+          <Route path="schedule" element={<CandidateSchedule />} />
+          <Route path="help" element={<CandidateHelp />} />
         </Route>
         
         {/* Interview session standalone page */}
